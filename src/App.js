@@ -10,7 +10,7 @@ const initialValues = {
   sex:"",
 };
 
-const validate = (values) =>{
+const val_idate = (values) =>{
   const errors = {}
   if(!values.firstName){
     errors.firstname = "first name empty"
@@ -36,69 +36,90 @@ const validate = (values) =>{
 
 
 
-// submitis dros agzavnis magram carela masivs  amitom ar vici deleiti da editi rogor mushaobs sad maqvs shecdoma egec ver vipove
+// deleteze da editze gavichede
 
 
 
 
 
 function App() {
-  // useEffect(() => {
-  //   axios.get("http://localhost:3001/users", ).then((data) => {
-  //     console.log(data)
-  //   })
-  // })
-  // useEffect(() => {
-  //   axios.post("http://localhost:3001/users", initialValues).then((data) => {
-  //     console.log(data)
-  //   })
-    
-  // })
+  
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [users, setUsers] = useState([]);
-    const [formValues, setFormValues] = useState(initialValues);
-    const [formErrors, setFormErrors] = useState({});
-    const [isUserUpdating, setIsUserUpdating] = useState(false);
-    const handleChange = (e) => {
-      const {name, value} = e.target;
-      setFormValues({ ...formValues, [name]: value})
+  const [formValues, setFormValues] = useState(initialValues);
+  const [formErrors, setFormErrors] = useState({});
+  const [isUserUpdating, setIsUserUpdating] = useState(false);
+  const handleChange = (e) => {
+    const {name, value} = e.target;
+    setFormValues({ ...formValues, [name]: value})
+  }
+
+    useEffect(() => {
+      const getUsers = async () => {
+        try {
+          setLoading(true);
+          const {data} = await axios.get("http://localhost:3001/users")
+          setUsers(data.data)
+          setLoading(false)
+        } catch (error) {
+          setFormErrors(error.message)
+          setLoading(false)
+        }
+      };
+      getUsers()
+    },[])
+
+    if(loading){
+      return <h1>loading....</h1>
     }
+
+    if(error){
+      return <h1>error!</h1>
+    }
+
+
+
     const handleSubmit = (e) => {
       e.preventDefault()
-      setFormErrors(validate(formValues))
-      axios.post("http://localhost:3001/users", initialValues).then((data) => {
+      setFormErrors(val_idate(formValues))
+      axios.post("http://localhost:3001/users", formValues).then((data) => {
         console.log(data)
       })
+      
 
       if(isUserUpdating) {
         setUsers((prevUsers) => {
           const newUsersArray = prevUsers.reduce((acc, curr) => {
-            const userObj = curr.id === formValues.id ? formValues : curr;
+            const userObj = curr._id === formValues._id ? formValues : curr;
             return [...acc, userObj]
           }, [])
           return newUsersArray;
         })
-      }else {
-        setUsers((prevUsers) => {
-          return [...prevUsers, {...formValues, id: new Date().toString()}]
-        })
-      }
+      } 
+      // else {
+      //   setUsers((prevUsers) => {
+      //     return [...prevUsers, {...formValues, _id: new Date().toString()}]
+      //   })
+      // }
       setFormValues(initialValues)
       setIsUserUpdating(false)
       
     }
-    const onDelete = (id) => {
-      setUsers((prevUsers) => {
-        const newUsersArray = prevUsers.filter((user) => user.id !== id)
-        axios.delete("http://localhost:3001/users/${user.id}").then((data) => {
-        console.log(data)
+    const onDelete = (_id) => {
+      axios.delete("http://localhost:3001/users/${user._id}").then((data) => {
+          console.log("data",data)
       })
-        return newUsersArray
-      })
+      // setUsers((prevUsers) => {
+      //   // const newUsersArray = prevUsers.filter((user) => user._id !== _id)
+        
+      //   return newUsersArray
+      // })
     }
-    const onEdit = (id) => {
-      const selectedUser = users.find((user) => user.id === id)
+    const onEdit = (_id) => {
+      const selectedUser = users.find((user) => user._id === _id)
       setFormValues(selectedUser)
-      axios.put("http://localhost:3001/users/${user.id}").then((data) => {
+      axios.put("http://localhost:3001/users/${user._id}").then((data) => {
         console.log(data)
       })
     }
@@ -144,21 +165,21 @@ function App() {
           />{""}
           {formErrors.age && <p>{formErrors.age}</p>}
         </div>
-        <select onChange={handleChange}>
-          <option value={formValues.sex}>male</option>
-          <option value={formValues.sex}>female</option>
-          <option value={formValues.sex}>other</option>
+        <select value={formValues.sex} onChange={handleChange} name="sex">
+          <option>other</option>
+          <option>female</option>
+          <option>male</option>
         </select>
         <button onClick={handleSubmit} type="submit">submit</button>
         {users.map((user) => (
-          <div key={user.id}> {user.firstName} {user.lastName} {user.age} {user.email}
+          <div key={user._id}> {user.firstName} {user.lastName} {user.age} {user.email} {user.sex}
             <button onClick={() => {
               setIsUserUpdating(true)
-              onEdit(user.id)
+              onEdit(user._id)
             }}>
               edit
             </button>
-            <button onClick={() => onDelete(user.id)}>delete</button>
+            <button onClick={() => onDelete(user._id)}>delete</button>
           </div>
         ))}
       </div>
